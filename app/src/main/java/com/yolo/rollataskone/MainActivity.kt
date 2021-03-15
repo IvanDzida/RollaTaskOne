@@ -2,27 +2,27 @@ package com.yolo.rollataskone
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.yolo.rollataskone.adapters.ItemAdapter
 import com.yolo.rollataskone.data.Item
 import com.yolo.rollataskone.databinding.ActivityMainBinding
+import com.yolo.rollataskone.util.Worker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.LinkedBlockingQueue
 
 class MainActivity : AppCompatActivity(), ItemClickListener, DisplayLoading {
+
     lateinit var binding: ActivityMainBinding
     private val scopeMainThread = CoroutineScope(Dispatchers.Main)
 
     private val items = mutableListOf<Item>()
     private val selectedItems = mutableListOf<Item>()
 
-    val lbq = LinkedBlockingQueue<Item>()
+    private val lbq = LinkedBlockingQueue<Item>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,8 +33,6 @@ class MainActivity : AppCompatActivity(), ItemClickListener, DisplayLoading {
 
         Thread(Worker(this, lbq) {
             runOnUiThread {
-                Log.i("maxxx", "worker begin - listSize: ${selectedItems.size}")
-
                 if (selectedItems.isNotEmpty()) {
                     if (selectedItems[0] == it) {
                         selectedItems.removeAt(0)
@@ -48,10 +46,6 @@ class MainActivity : AppCompatActivity(), ItemClickListener, DisplayLoading {
                     selectedItems.add(it)
                     binding.resultMessage.text = it.description
                 }
-
-                //  binding.loadingView.visibility = GONE
-                Log.e("maxxx", "worker end - listSize: ${selectedItems.size}")
-                Log.e("IVANN", "Task $it finished!!")
             }
         }).start()
     }
@@ -88,31 +82,6 @@ class MainActivity : AppCompatActivity(), ItemClickListener, DisplayLoading {
             } else {
                 binding.loadingView.visibility = GONE
             }
-        }
-
-    }
-}
-
-class Worker(
-        private val displayLoading: DisplayLoading,
-        private val queue: LinkedBlockingQueue<Item>,
-        private val onNext: (Item) -> (Unit)
-) :
-        Runnable {
-    var running = false
-    override fun run() {
-        doSomeWork()
-    }
-
-    private fun doSomeWork() {
-        running = true
-        while (running) {
-            val item = queue.take()
-            displayLoading.displayLoading(true)
-            val delay = (1000..3000).random().toLong()
-            Thread.sleep(delay) // random delay
-            displayLoading.displayLoading(false)
-            onNext.invoke(item)
         }
     }
 }

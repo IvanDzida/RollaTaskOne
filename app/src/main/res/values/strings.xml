@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Rolla Task One</string>
+    <string name="loading">Loading…</string>
 </resources>
